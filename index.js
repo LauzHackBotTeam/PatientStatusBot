@@ -28,12 +28,11 @@ app.post("/api/messages", connector.listen());
 
 let onboardingDialog = new botbuilder.IntentDialog()
   .onBegin((session, results, next) => {
-    session.send("Welcome to StatusBot!");
     let options = new botbuilder.HeroCard(session)
       .text(`What do you want to do?`)
       .buttons([
-        botbuilder.CardAction.imBack(session, "subscribe", "Subscribe to a patient status"),
-        botbuilder.CardAction.imBack(session, "check", "Check patient status")
+        botbuilder.CardAction.imBack(session, "menu", "Check menu"),
+        botbuilder.CardAction.imBack(session, "status", "Check status")
       ]);
 
     let msg = new botbuilder.Message(session)
@@ -46,13 +45,14 @@ let onboardingDialog = new botbuilder.IntentDialog()
     }
   ]);
 
-onboardingDialog.matches(/^(susbcribe)/i, "subscribeToPatientStatus")
-  .matches(/^(check)/i, "checkPatientStatus");
+onboardingDialog
+  .matches(/^(status)/i, "checkPatientStatus")
+  .matches(/^(menu)/i, "checkDailyMenu");
   
-bot.dialog('/', onboardingDialog);
-bot.dialog('subscribeToPatientStatus', [
+bot.dialog('/', [
   (session, results, next) => {
-    botbuilder.Prompts.text(session, "Tell me the patient code");
+    session.send("Welcome to StatusBot!");
+    botbuilder.Prompts.text(session, "Tell me the code of the patient");
   },
   (session, results, next) => {
     // TODO: request to API to subscribe
@@ -68,24 +68,24 @@ bot.dialog('subscribeToPatientStatus', [
     //     console.log(resp);
         let patientName = "Jonathan Meyers";
         session.send(`You've subscribed to the patient ${patientName} status`);
+        session.privateConversationData.patientCode = results.text;
+        session.beginDialog('onboarding');
     //   })
     //   .catch((err)=> {
     //     console.log(err);
     //   });
   }
 ]);
+
+bot.dialog('onboarding', onboardingDialog);
 bot.dialog('checkPatientStatus', [
   (session, results, next) => {
-    botbuilder.Prompts.text(session, "Tell me the patient code");
-  },
-  (session, results, next) => {
     // TODO: request to API to know the status
-    // TODO: request to API to subscribe
     // rp({
     //   method: "GET",
     //   url: "http://herokuapp.com",
     //   body: {
-    //     id: results.text
+    //     id: session.privateConversationData.patientCode
     //   }
     // })
     //   .then((resp)=> {
@@ -100,3 +100,41 @@ bot.dialog('checkPatientStatus', [
     //   });
   }
 ]);
+
+bot.dialog('checkDailyMenu', [
+  (session, results, next) => {
+    // TODO: request to API to know the status
+    // rp({
+    //   method: "GET",
+    //   url: "http://herokuapp.com",
+    //   body: {
+    //     id: session.privateConversationData.patientCode
+    //   }
+    // })
+    //   .then((resp)=> {
+    //     console.log(resp);
+        // let menu = resp.menu;
+        let menu = {
+          lunch: "meal1 meal2",
+          dinner: "meal3 and meal4"
+        };
+        for(let meal of menu) {
+          session.send(`${meal}: ${menu[meal]}`);
+        }
+    //   })
+    //   .catch((err)=> {
+    //     console.log(err);
+    //   });
+  }
+]);
+
+// Middleware
+bot.use({
+  botbuilder: [
+    (session, next) => {
+      let message = session.message.text.toLowerCase();
+      if(message == "clear") return session.endConversation("Ending conversation...");
+      next();
+    }
+  ]
+})
