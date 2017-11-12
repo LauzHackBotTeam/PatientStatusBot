@@ -1,5 +1,6 @@
 const botbuilder = require('botbuilder');
 const express = require('express');
+const rp = require('request-promise');
 
 //create an express server
 let app = express();
@@ -55,25 +56,25 @@ bot.dialog('/', [
     botbuilder.Prompts.text(session, "Tell me the code of the patient");
   },
   (session, results, next) => {
-    // TODO: request to API to subscribe
-    // rp({
-    //   method: "POST",
-    //   url: "http://herokuapp.com",
-    //   body: {
-    //     address: session.message.address,
-    //     id: results.text
-    //   }
-    // })
-    //   .then((resp)=> {
-    //     console.log(resp);
+    rp({
+      method: "POST",
+      url: process.env.API_URL + 'subscribe',
+      body: {
+        address: session.message.address,
+        patientId: results.response
+      },
+      json: true
+    })
+      .then((resp)=> {
+        console.log(resp);
         let patientName = "Jonathan Meyers";
         session.send(`You've subscribed to the patient ${patientName} status`);
-        session.privateConversationData.patientCode = results.text;
+        session.privateConversationData.patientCode = results.response;
         session.beginDialog('onboarding');
-    //   })
-    //   .catch((err)=> {
-    //     console.log(err);
-    //   });
+      })
+      .catch((err)=> {
+        console.log(err);
+      });
   }
 ]);
 
@@ -94,6 +95,7 @@ bot.dialog('checkPatientStatus', [
         let patientStatus = "13:45 - Stable";
         session.send(`Last status for the patient ${patientName}:`);
         session.send(patientStatus);
+        session.endDialog();
     //   })
     //   .catch((err)=> {
     //     console.log(err);
@@ -118,9 +120,10 @@ bot.dialog('checkDailyMenu', [
           lunch: "meal1 meal2",
           dinner: "meal3 and meal4"
         };
-        for(let meal of menu) {
+        for(let meal in menu) {
           session.send(`${meal}: ${menu[meal]}`);
         }
+        session.endDialog();
     //   })
     //   .catch((err)=> {
     //     console.log(err);
@@ -137,4 +140,16 @@ bot.use({
       next();
     }
   ]
-})
+});
+
+
+// Proactive Notifications
+bot.on('trigger', (data) => {
+	let address = data.value.address;
+  let text = data.vale.text;
+
+  let msg = new builder.Message()
+  .address(address)
+  .text(text)
+  bot.send(msg);
+});
