@@ -85,7 +85,7 @@ bot.dialog('checkPatientStatus', [
     // TODO: request to API to know the status
     rp({
       method: "GET",
-      url: API_URL + '/' + session.privateConversationData.patientId + '/surgery',
+      url: API_URL + session.privateConversationData.patientId + '/surgery',
       json: true
     })
       .then((resp)=> {
@@ -105,7 +105,7 @@ bot.dialog('checkDailyMenu', [
     // TODO: request to API to know the status
     rp({
       method: "GET",
-      url: API_URL + '/' + session.privateConversationData.patientId + '/menu',
+      url: API_URL + session.privateConversationData.patientId + '/menu',
       json: true
     })
       .then((resp)=> {
