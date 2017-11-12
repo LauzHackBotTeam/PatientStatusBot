@@ -66,8 +66,7 @@ bot.dialog('/', [
       json: true
     })
       .then((resp)=> {
-        console.log(resp);
-        let patientName = "Jonathan Meyers";
+        let patientName = resp.name;
         session.send(`You've subscribed to the patient ${patientName} status`);
         session.privateConversationData.patientCode = results.response;
         session.beginDialog('onboarding');
@@ -146,10 +145,10 @@ bot.use({
 // Proactive Notifications
 bot.on('trigger', (data) => {
 	let address = data.value.address;
-  let text = data.vale.text;
+  let text = data.value.text;
 
   let msg = new builder.Message()
-  .address(address)
-  .text(text)
+    .address(address)
+    .text(text)
   bot.send(msg);
 });
