@@ -91,7 +91,6 @@ bot.dialog('checkPatientStatus', [
       .then((resp)=> {
         
         session.send(`Last status of ${session.privateConversationData.patientName}: ${resp.status}`);
-        session.send(patientStatus);
         session.endDialog();
       })
       .catch((err)=> {
