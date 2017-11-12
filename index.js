@@ -72,7 +72,7 @@ bot.dialog('/', [
         session.privateConversationData.patientName = resp.name;
         session.privateConversationData.patientId = results.response;
 
-        session.send(`You've subscribed to the patient ${session.privateConversationData.patientName} status`);
+        session.send(`You've subscribed to the status of the patient ${session.privateConversationData.patientName}`);
         session.beginDialog('onboarding');
       })
       .catch((err)=> {
