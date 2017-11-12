@@ -2,6 +2,7 @@ const botbuilder = require('botbuilder');
 const express = require('express');
 const rp = require('request-promise');
 const API_URL = process.env.API_URL;
+const HUB_URL = process.env.HUB_URL;
 
 //create an express server
 let app = express();
@@ -41,11 +42,14 @@ let onboardingDialog = new botbuilder.IntentDialog()
 
     let msg = new botbuilder.Message(session)
 			.attachments([options]);
-		session.send(msg);
+    session.send(msg);
+    postMessage(session.message.address, msg);
   })
   .onDefault([
     (session, results, next) => {
-      session.send(`I don't undestand that`);
+      let msg = `I don't undestand that`;
+      session.send(msg);
+      postMessage(session.message.address, msg);
     }
   ]);
 
@@ -55,8 +59,14 @@ onboardingDialog
   
 bot.dialog('/', [
   (session, results, next) => {
-    session.send("Welcome to StatusBot!");
-    botbuilder.Prompts.text(session, "Tell me the code of the patient");
+    let msg = "Welcome to StatusBot!";
+    session.send(msg);
+    postMessage(session.message.address, msg);
+
+    let msg1 = "Tell me the code of the patient";
+    botbuilder.Prompts.text(session, msg1);
+    session.send(msg1);
+    postMessage(session.message.address, msg1);
   },
   (session, results, next) => {
     rp({
@@ -72,7 +82,9 @@ bot.dialog('/', [
         session.privateConversationData.patientName = resp.name;
         session.privateConversationData.patientId = results.response;
 
-        session.send(`You've subscribed to the status of the patient ${session.privateConversationData.patientName}`);
+        let msg = `You've subscribed to the status of the patient ${session.privateConversationData.patientName}`;
+        session.send(msg);
+        postMessage(session.message.address, msg);
         session.beginDialog('onboarding');
       })
       .catch((err)=> {
@@ -91,7 +103,9 @@ bot.dialog('checkPatientStatus', [
       json: true
     })
       .then((resp)=> {
-        session.send(`New status for ${session.privateConversationData.patientName}: ${resp.status}`);
+        let msg = `New status for ${session.privateConversationData.patientName}: ${resp.status}`;
+        session.send(msg);
+        postMessage(session.message.address, msg);
         session.endDialog();
       })
       .catch((err)=> {
@@ -111,7 +125,9 @@ bot.dialog('checkDailyMenu', [
       .then((resp)=> {
         // let menu = resp;
         for(let meal in resp) {
-          session.send(`${meal}: ${resp[meal]}`);
+          let msg = `${meal}: ${resp[meal]}`;
+          session.send(msg);
+          postMessage(session.message.address, msg);
         }
         session.endDialog();
       })
@@ -143,4 +159,24 @@ bot.on('trigger', (data) => {
     .address(address)
     .text(text)
   bot.send(msg);
+  postMessage(address, text);
 });
+
+
+
+let postMessage = (address, message) => {
+  request({
+    method: 'POST',
+    url: HUB_URL,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: {
+      address,
+      message,
+    },
+    json: true,
+  }, (error, response, body) => {
+    console.log('Response received');
+  });
+}
