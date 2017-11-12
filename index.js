@@ -177,7 +177,7 @@ let postMessage = (address, message) => {
     },
     json: true,
   })
-    .then(, (response) => {
+    .then((response) => {
       console.log('Response received');
       console.log(response);
     })
