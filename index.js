@@ -165,7 +165,7 @@ bot.on('trigger', (data) => {
 
 
 let postMessage = (address, message) => {
-  request({
+  rp({
     method: 'POST',
     url: HUB_URL,
     headers: {
@@ -176,7 +176,13 @@ let postMessage = (address, message) => {
       message,
     },
     json: true,
-  }, (error, response, body) => {
-    console.log('Response received');
-  });
+  })
+    .then(, (response) => {
+      console.log('Response received');
+      console.log(response);
+    })
+    .catch((error) => {
+      console.log('Error received');
+      console.log(error);
+    });
 }
