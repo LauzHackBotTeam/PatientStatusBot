@@ -11,6 +11,8 @@ app.listen(port, function () {
     console.log('%s listening in port %s', app.name, port);
 });
 
+const DEFAULT_STATUS = ['before surgery', 'started', 'finished', 'recovery room', 'exiting recovery'];
+
 //create a chat connector for the bot
 let connector = new botbuilder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
@@ -89,8 +91,8 @@ bot.dialog('checkPatientStatus', [
       json: true
     })
       .then((resp)=> {
-        
-        session.send(`Last status of ${session.privateConversationData.patientName}: ${resp.status}`);
+        if()
+        session.send(`New status for ${session.privateConversationData.patientName}: ${resp.status}`);
         session.endDialog();
       })
       .catch((err)=> {
@@ -110,7 +112,7 @@ bot.dialog('checkDailyMenu', [
       .then((resp)=> {
         // let menu = resp;
         for(let meal in resp) {
-          session.send(`${meal}: ${menu[meal]}`);
+          session.send(`${meal}: ${resp[meal]}`);
         }
         session.endDialog();
       })
@@ -136,7 +138,7 @@ bot.use({
 bot.on('trigger', (data) => {
 	let address = data.value.address;
   let text = data.value.text;
-
+  if(!DEFAULT_STATUS.includes(text)) text = `New message from the doctor: ${text}`;
   let msg = new botbuilder.Message()
     .address(address)
     .text(text)
