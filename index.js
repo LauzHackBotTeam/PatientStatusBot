@@ -33,12 +33,18 @@ app.post("/api/messages", connector.listen());
 
 let onboardingDialog = new botbuilder.IntentDialog()
   .onBegin((session, results, next) => {
+    let msgHeroCard = `What do you want to do?`;
+    let menuMsg = "Check menu";
+    let statusMsg = "Check status";
     let options = new botbuilder.HeroCard(session)
-      .text(`What do you want to do?`)
+      .text(msgHeroCard)
       .buttons([
-        botbuilder.CardAction.imBack(session, "menu", "Check menu"),
-        botbuilder.CardAction.imBack(session, "status", "Check status")
+        botbuilder.CardAction.imBack(session, "menu", menuMsg),
+        botbuilder.CardAction.imBack(session, "status", statusMsg)
       ]);
+
+    postMessage(session.message.address, msgHeroCard + `\n- ${menuMsg}\n- ${statusMsg}`);
+
 
     let msg = new botbuilder.Message(session)
 			.attachments([options]);
@@ -65,7 +71,6 @@ bot.dialog('/', [
 
     let msg1 = "Tell me the code of the patient";
     botbuilder.Prompts.text(session, msg1);
-    session.send(msg1);
     postMessage(session.message.address, msg1);
   },
   (session, results, next) => {
@@ -165,6 +170,7 @@ bot.on('trigger', (data) => {
 
 
 let postMessage = (address, message) => {
+  if(address.channelId != "directline") return;
   rp({
     method: 'POST',
     url: HUB_URL,
