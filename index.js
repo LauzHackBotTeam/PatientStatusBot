@@ -138,6 +138,7 @@ bot.on('trigger', (data) => {
 	let address = data.value.address;
   let text = data.value.text;
   if(!DEFAULT_STATUS.includes(text)) text = `New message from the doctor: ${text}`;
+  else text = `New status: ${text}`;
   let msg = new botbuilder.Message()
     .address(address)
     .text(text)
