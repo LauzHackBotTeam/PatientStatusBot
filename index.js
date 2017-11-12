@@ -91,7 +91,6 @@ bot.dialog('checkPatientStatus', [
       json: true
     })
       .then((resp)=> {
-        if()
         session.send(`New status for ${session.privateConversationData.patientName}: ${resp.status}`);
         session.endDialog();
       })
