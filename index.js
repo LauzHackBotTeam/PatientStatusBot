@@ -1,6 +1,7 @@
 const botbuilder = require('botbuilder');
 const express = require('express');
 const rp = require('request-promise');
+const API_URL = process.env.API_URL;
 
 //create an express server
 let app = express();
@@ -58,7 +59,7 @@ bot.dialog('/', [
   (session, results, next) => {
     rp({
       method: "POST",
-      url: process.env.API_URL + 'subscribe',
+      url: API_URL + 'subscribe',
       body: {
         address: session.message.address,
         patientId: results.response
@@ -66,9 +67,10 @@ bot.dialog('/', [
       json: true
     })
       .then((resp)=> {
-        let patientName = resp.name;
-        session.send(`You've subscribed to the patient ${patientName} status`);
-        session.privateConversationData.patientCode = results.response;
+        session.privateConversationData.patientName = resp.name;
+        session.privateConversationData.patientId = results.response;
+
+        session.send(`You've subscribed to the patient ${session.privateConversationData.patientName} status`);
         session.beginDialog('onboarding');
       })
       .catch((err)=> {
@@ -81,52 +83,41 @@ bot.dialog('onboarding', onboardingDialog);
 bot.dialog('checkPatientStatus', [
   (session, results, next) => {
     // TODO: request to API to know the status
-    // rp({
-    //   method: "GET",
-    //   url: "http://herokuapp.com",
-    //   body: {
-    //     id: session.privateConversationData.patientCode
-    //   }
-    // })
-    //   .then((resp)=> {
-    //     console.log(resp);
-        let patientName = "Jonathan Meyers";
-        let patientStatus = "13:45 - Stable";
-        session.send(`Last status for the patient ${patientName}:`);
+    rp({
+      method: "GET",
+      url: API_URL + '/' + session.privateConversationData.patientId + '/surgery',
+      json: true
+    })
+      .then((resp)=> {
+        
+        session.send(`Last status of ${session.privateConversationData.patientName}: ${resp.status}`);
         session.send(patientStatus);
         session.endDialog();
-    //   })
-    //   .catch((err)=> {
-    //     console.log(err);
-    //   });
+      })
+      .catch((err)=> {
+        console.log(err);
+      });
   }
 ]);
 
 bot.dialog('checkDailyMenu', [
   (session, results, next) => {
     // TODO: request to API to know the status
-    // rp({
-    //   method: "GET",
-    //   url: "http://herokuapp.com",
-    //   body: {
-    //     id: session.privateConversationData.patientCode
-    //   }
-    // })
-    //   .then((resp)=> {
-    //     console.log(resp);
-        // let menu = resp.menu;
-        let menu = {
-          lunch: "meal1 meal2",
-          dinner: "meal3 and meal4"
-        };
-        for(let meal in menu) {
+    rp({
+      method: "GET",
+      url: API_URL + '/' + session.privateConversationData.patientId + '/menu',
+      json: true
+    })
+      .then((resp)=> {
+        // let menu = resp;
+        for(let meal in resp) {
           session.send(`${meal}: ${menu[meal]}`);
         }
         session.endDialog();
-    //   })
-    //   .catch((err)=> {
-    //     console.log(err);
-    //   });
+      })
+      .catch((err)=> {
+        console.log(err);
+      });
   }
 ]);
 
@@ -147,7 +138,7 @@ bot.on('trigger', (data) => {
 	let address = data.value.address;
   let text = data.value.text;
 
-  let msg = new builder.Message()
+  let msg = new botbuilder.Message()
     .address(address)
     .text(text)
   bot.send(msg);
